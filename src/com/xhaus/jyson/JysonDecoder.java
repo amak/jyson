@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Alan Kennedy
+ * Copyright 2009-2012 Alan Kennedy
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); 
  * you may not use this file except in compliance with the License. 
@@ -377,7 +377,7 @@ public class JysonDecoder
 			if (c != ':')
 				{ throw decode_exception("Object keys and values must be separated by ':'"); }
 			PyObject value = get_object();
-			json_object.__setitem__(new PyString(key), value);
+			json_object.__setitem__(new PyUnicode(key), value);
 			switch (get_data_char())
 			{
 				case ',':
@@ -401,9 +401,12 @@ public class JysonDecoder
 	protected PyList get_json_array ()
 		throws JSONDecodeError
 	{
-		PyList json_array = new PyList();
+		char next = get_data_char();
+		if (next == 0)
+			{ throw decode_exception("Ran out of characters reading array"); }
 
-		if (get_data_char() == ']')
+		PyList json_array = new PyList();
+		if ( next == ']')
 			{ return json_array; }
 			
 		push();
@@ -415,6 +418,8 @@ public class JysonDecoder
 			json_array.append(get_object());
 			switch (get_data_char())
 			{
+				case 0:
+					{ throw decode_exception("Ran out of characters reading array"); }
 				case ',':
 					if (get_data_char() == ']')
 						{
@@ -445,10 +450,10 @@ public class JysonDecoder
 			case '[':
 				return get_json_array();
 			case '"':
-				return new PyString(get_string(c));
+				return new PyUnicode(get_string(c));
 			case '\'':
 				if (accept_single_quoted_strings)
-					return new PyString(get_string(c));
+					return new PyUnicode(get_string(c));
 				else
 					throw decode_exception("Single quoted strings are not accepted");
 		}

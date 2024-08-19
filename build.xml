@@ -1,6 +1,6 @@
 <!--
 
-Copyright 2009 Alan Kennedy
+Copyright 2009-2012 Alan Kennedy
 
 Licensed under the Apache License, Version 2.0 (the "License"); 
 you may not use this file except in compliance with the License. 
@@ -23,7 +23,7 @@ limitations under the License.
   <property name="src"       value="src"/>
   <property name="test"      value="test"/>
   <property name="build"     value="build"/>
-  <property name="version"   value="1.0.0"/>
+  <property name="version"   value="1.0.2"/>
   <property name="dist_name" value="${product}-${version}"/>
   <property name="dist_dir"  value="${dist_name}"/>
   <property name="dist_src"	 location="${dist_dir}/src"/>

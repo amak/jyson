@@ -1,5 +1,5 @@
 #
-# Copyright 2009 Alan Kennedy
+# Copyright 2009-2012 Alan Kennedy
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -15,7 +15,7 @@
 #
 
 """
-	Test the list of JSON ezxpression given on the following page
+	Test the list of JSON expressions given on the following page
 	Chosing a python JSON translator.
 	http://blog.hill-street.net/?p=7
 """

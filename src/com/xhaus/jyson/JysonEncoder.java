@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Alan Kennedy
+ * Copyright 2009-2012 Alan Kennedy
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); 
  * you may not use this file except in compliance with the License. 
@@ -59,7 +59,8 @@ public class JysonEncoder
 			else if (ch == '\b') buf.append("\\b");
 			else if (ch == '\f') buf.append("\\f");
 			else if (ch == '\r') buf.append("\\r");
-			else if (ch < ' ' || (ch >= 127 && emit_ascii))
+			else if (ch < ' ' || (ch >= 127 && emit_ascii) || 
+			        (ch >= Character.MIN_SURROGATE && ch <= Character.MAX_SURROGATE))
 			{
 				/* Map control and non ascii characters to '\\uxxxx' */
 				buf.append("\\u");
@@ -125,6 +126,9 @@ public class JysonEncoder
 	{
 		if (py_obj instanceof PyString)
 			append_json_string_repr(buf, ((PyString)py_obj).toString());
+		// Must test for PyBoolean before PyInteger because former is a subclass of latter.
+		else if (py_obj instanceof PyBoolean)
+			buf.append(((PyBoolean)py_obj).getBooleanValue() ? "true" : "false");
 		else if (py_obj instanceof PyInteger)
 			 buf.append(Integer.toString(((PyInteger)py_obj).getValue()));
 		else if (py_obj instanceof PyLong)

@@ -1,5 +1,5 @@
 #
-# Copyright 2009 Alan Kennedy
+# Copyright 2009-2012 Alan Kennedy
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -14,6 +14,7 @@
 # limitations under the License. 
 #
 
+import java
 import sys
 import types
 import unittest
@@ -64,9 +65,7 @@ class JysonTest(unittest.TestCase):
 		pieces = ["["]
 		for v in values:
 			if isinstance(v, types.StringType) or isinstance(v, types.UnicodeType):
-# Same string interpolation bug 
-#				pieces.append('"%s"' % v)
-				pieces.append('"' + v + '"')
+				pieces.append('"%s"' % v)
 			else:
 				pieces.append(repr(v))
 			pieces.append(', ')
@@ -248,14 +247,28 @@ class TestEncodeStrings(JysonTest):
 	def testEncodeStringWithUnicodeEscapes(self):
 		py_string = u'Al\u00E1in \u00D3 Cinn\u00E9ide'
 		actual = self.encoder(py_string)
-#		No reason the following should work; probably a jython bug
-#		expected = u'"%s"' % py_string
-		expected = u'"' + py_string + u'"'
+		expected = u'"%s"' % py_string
 		self.failUnlessEqual(actual, expected)
 
 	def testEncodeStringWithUnicodeNames(self):
 		u = u'\N{GREEK SMALL LETTER ALPHA}\N{GREEK CAPITAL LETTER OMEGA}'
 		self.failUnlessEqual(self.encoder(u), u'"\u03b1\u03a9"')
+
+class TestSupplementaryCharacters(JysonTest):
+
+	def testEncodeStringWithSurrogate(self):
+		import jarray
+		smiley_bytes = [-2, -1, -40, 61, -34, 7]
+		smiley_byte_array = jarray.array(smiley_bytes, 'b')
+		java_smiley_string = java.lang.String(smiley_byte_array, "UTF-16")
+		jython_smiley_string = unicode(java_smiley_string)
+		expected_ascii = u'"\\uD83D\\uDE07"'
+		self.failUnlessEqual(self.encoder(jython_smiley_string, emit_ascii=1), expected_ascii)
+
+	def testDecocdeThenEncodeStringWithSurrogate(self):
+		original = '["This is a treble-clef' + '\\' + 'uD834' + '\\' + 'uDD1E, really"]'
+		encoded = self.encoder(self.decoder(original))
+		self.failUnlessEqual(original, encoded)
 
 class TestStringOptions(JysonTest):
 
@@ -472,10 +485,10 @@ class TestDecodeConstants(JysonTest):
 class TestEncodeConstants(JysonTest):
 
 	def testEncodeTrue(self):
-		self.failUnlessEqual(self.encoder(1), '1')
+		self.failUnlessEqual(self.encoder(True), 'true')
 
 	def testEncodeFalse(self):
-		self.failUnlessEqual(self.encoder(0), '0')
+		self.failUnlessEqual(self.encoder(False), 'false')
 
 	def testEncodeNull(self):
 		self.failUnlessEqual(self.encoder(None), 'null')
@@ -496,6 +509,12 @@ class TestDecodeJysonObject(JysonTest):
 		test_string = """{\n"test_key"\r\n:\n "test_value"\r}"""
 		test_object = self.decoder(test_string)
 		self.assertObjectEqual({'test_key': 'test_value'}, test_object)
+
+	def testDecodeObjectWithMultipleKys(self):
+		test_string = """{"test_key_0": "test_value_0","test_key_1": "test_value_1","test_key_2": "test_value_2"}"""
+		test_object = self.decoder(test_string)
+		for i in range(3):
+			self.assertEqual(test_object['test_key_%d' % i], 'test_value_%d' % i)
 
 	def testDecodeObjectWithIntegerKey(self):
 		bad_keys = [
@@ -914,6 +933,15 @@ class TestDecodeArray(JysonTest):
 				pass
 			else:
 				self.fail("Illegal terminator " +illegal_terminator+ " on array should have raised JSONDecodeError")
+
+	def testArrayMalformed(self):
+		for s in ['[', ']',]:
+			try:
+			    obj = self.decoder(s)
+			except JSONDecodeError:
+				pass
+			else:
+			    self.fail("Malformed array '%s' should have raised JSONDecodeError" % s)
 
 class TestVariousOptions(JysonTest):
 
