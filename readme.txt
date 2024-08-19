@@ -1,3 +1,3 @@
-The documentation for jyson can be read at
+The documentation for jyson can be read on the github wiki
 
-http://jyson.xhaus.com
+https://github.com/amak/jyson/wiki
